@@ -1,7 +1,6 @@
 let canvas = document.getElementById('drawing-board')
 let ctx = canvas.getContext('2d')
-let ColorBtn = document.getElementsByClassName('color-item');
-
+let colorBtn = document.getElementsByClassName('color-item');
 
 const highlighter = document.getElementById('highlighter');
 const eraser = document.getElementById('eraser');
@@ -27,23 +26,22 @@ let lastPoint
 let points = [];
 let beginPoint = null;
 
-
+// 创建高清画布
+createHDCanvas()
+// 设置背景颜色，下载的图片背景才有颜色
 setCanvasBg('white');
 // 获取线条颜色
 selectColor()
-// 绘制网格线背景
-
 // 判断是否为触屏设备
 let isTouchDevice = 'ontouchstart' in document.documentElement
 if (isTouchDevice) {
   // 触屏设备
   canvas.ontouchstart = (e) => {
-    console.log(e)
     isDrawing = true
     ctx.beginPath()
     beginPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY}
     points.push({x: e.touches[0].clientX, y: e.touches[0].clientY});
-    drawCircle(e.clientX, e.clientY, 2)
+    drawCircle(e.clientX, e.clientY, 2) //TODO 指定大小
   }
   canvas.ontouchmove = (e) => {
     if (!isDrawing) return
@@ -68,7 +66,7 @@ if (isTouchDevice) {
     ctx.beginPath()
     beginPoint = {x: e.clientX, y: e.clientY}
     points.push({x: e.clientX, y: e.clientY});
-    drawCircle(e.clientX, e.clientY, 2)
+    drawCircle(e.clientX, e.clientY, 2) //TODO 指定大小
   }
 
   canvas.onmousemove = (e) => {
@@ -85,7 +83,6 @@ if (isTouchDevice) {
       }
       drawSmoothLine(beginPoint, controlPoint, endPoint);
       beginPoint = endPoint;
-      console.log(lastPoint)
     }
   }
 
@@ -101,6 +98,7 @@ if (isTouchDevice) {
       drawSmoothLine(beginPoint, controlPoint, endPoint)
     }
     beginPoint = null;
+    drawCircle(e.clientX, e.clientY, 2) //TODO 指定大小
     isDrawing = false;
     points = [];
   }
@@ -114,11 +112,14 @@ if (isTouchDevice) {
 function drawCircle(x, y, radius) {
   ctx.save()
   ctx.beginPath()
+  ctx.fillStyle = lineColor
   ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.fill()
   if (isErasing) {
-    console.log(isErasing)
-    ctx.clip();
+    // ctx.fillStyle = 'white'
+    // ctx.strokeStyle = 'white'
+    ctx.clip()
+    // 存在橡皮擦按下 画黑色圆环的bug
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
   }
@@ -129,7 +130,6 @@ function drawSmoothLine(beginPoint, controlPoint, endPoint) {
   ctx.lineWidth = lineWidth
   if (isErasing) {
     ctx.save()
-    console.log(isErasing)
     ctx.globalCompositeOperation = "destination-out"
     ctx.moveTo(beginPoint.x, beginPoint.y);
     ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, endPoint.x, endPoint.y);
@@ -140,6 +140,8 @@ function drawSmoothLine(beginPoint, controlPoint, endPoint) {
     ctx.restore();
   } else {
     ctx.beginPath()
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
     ctx.moveTo(beginPoint.x, beginPoint.y);
     ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, endPoint.x, endPoint.y);
     ctx.stroke();
@@ -155,23 +157,37 @@ function setCanvasBg(color) {
 
 function selectColor() {
   ctx.beginPath()
-  for (let i = 0; i < ColorBtn.length; i++) {
-    ColorBtn[i].onclick = function () {
-      for (let i = 0; i < ColorBtn.length; i++) {
-        ColorBtn[i].classList.remove('active');
+
+  for (let i = 0; i < colorBtn.length; i++) {
+    colorBtn[i].onclick = function () {
+      for (let i = 0; i < colorBtn.length; i++) {
+        colorBtn[i].classList.remove('active');
         this.classList.add('active');
         lineColor = this.style.backgroundColor;
-        ctx.fillStyle = lineColor;
         ctx.strokeStyle = lineColor;
       }
     }
   }
+  return lineColor
 }
 
 eraser.onclick = () => {
   isErasing = true;
+  // ctx.strokeStyle = 'white'
 };
 
 highlighter.onclick = () => {
   isErasing = false;
 };
+
+function createHDCanvas (w=canvas.width,h=canvas.height) {
+  let ratio = window.devicePixelRatio || 1;
+  canvas.width = w * ratio; // 实际渲染像素
+  canvas.height = h * ratio; // 实际渲染像素
+  canvas.style.width = `${w}px`; // 控制显示大小
+  canvas.style.height = `${h}px`; // 控制显示大小
+  ctx.scale(ratio, ratio)
+  return canvas;
+}
+
+// export {lineWidth }

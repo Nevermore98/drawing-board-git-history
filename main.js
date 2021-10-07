@@ -21,6 +21,9 @@ save.onclick = function () {
     saveA.click();
 };
 
+range.onchange = function(){
+  lineWidth = this.value;
+};
 
 selectTool()
 
@@ -34,4 +37,6 @@ function selectTool(){
     }
   }
 }
+
+
 
