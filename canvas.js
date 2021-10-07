@@ -3,6 +3,12 @@ let ctx = canvas.getContext('2d')
 let ColorBtn = document.getElementsByClassName('color-item');
 
 
+const highlighter = document.getElementById('highlighter');
+const eraser = document.getElementById('eraser');
+const line = document.getElementById('line');
+const rect = document.getElementById('rect');
+const circle = document.getElementById('circle');
+
 canvas.width = document.documentElement.clientWidth
 canvas.height = document.documentElement.clientHeight
 
@@ -14,6 +20,8 @@ let lineColor = 'black'
 let lineWidth = 4
 
 let isDrawing = false
+let isErasing = false
+
 let lastPoint
 // 存储坐标点
 let points = [];
@@ -30,16 +38,28 @@ let isTouchDevice = 'ontouchstart' in document.documentElement
 if (isTouchDevice) {
   // 触屏设备
   canvas.ontouchstart = (e) => {
-    // let x = e.touches[0].clientX
-    // let y = e.touches[0].clientY
-    console.log(lastPoint)
+    console.log(e)
+    isDrawing = true
+    ctx.beginPath()
+    beginPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY}
+    points.push({x: e.touches[0].clientX, y: e.touches[0].clientY});
+    drawCircle(e.clientX, e.clientY, 2)
   }
   canvas.ontouchmove = (e) => {
-    let x = e.touches[0].clientX
-    let y = e.touches[0].clientY
-    drawSmoothLine(lastPoint[0], lastPoint[1], x, y)
-    lastPoint = [x, y]
-    console.log(lastPoint)
+    if (!isDrawing) return
+    ctx.beginPath()
+    points.push({x: e.touches[0].clientX, y: e.touches[0].clientY});
+
+    if (points.length > 3) {
+      const lastTwoPoints = points.slice(-2);
+      const controlPoint = lastTwoPoints[0];
+      const endPoint = {
+        x: (lastTwoPoints[0].x + lastTwoPoints[1].x) / 2,
+        y: (lastTwoPoints[0].y + lastTwoPoints[1].y) / 2,
+      }
+      drawSmoothLine(beginPoint, controlPoint, endPoint);
+      beginPoint = endPoint;
+    }
   }
 } else {
   // 非触屏设备
@@ -65,11 +85,12 @@ if (isTouchDevice) {
       }
       drawSmoothLine(beginPoint, controlPoint, endPoint);
       beginPoint = endPoint;
+      console.log(lastPoint)
     }
   }
 
   canvas.onmouseup = (e) => {
-    if (!isDrawing) return; 
+    if (!isDrawing) return;
     ctx.beginPath()
     points.push({x: e.clientX, y: e.clientY});
 
@@ -95,28 +116,46 @@ function drawCircle(x, y, radius) {
   ctx.beginPath()
   ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.fill()
+  if (isErasing) {
+    console.log(isErasing)
+    ctx.clip();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  }
 }
 
 // 绘制二次贝塞尔平滑曲线
 function drawSmoothLine(beginPoint, controlPoint, endPoint) {
-  ctx.beginPath()
   ctx.lineWidth = lineWidth
-  ctx.moveTo(beginPoint.x, beginPoint.y);
-  ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, endPoint.x, endPoint.y);
-  ctx.stroke();
-  ctx.closePath();
+  if (isErasing) {
+    ctx.save()
+    console.log(isErasing)
+    ctx.globalCompositeOperation = "destination-out"
+    ctx.moveTo(beginPoint.x, beginPoint.y);
+    ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, endPoint.x, endPoint.y);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.clip();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  } else {
+    ctx.beginPath()
+    ctx.moveTo(beginPoint.x, beginPoint.y);
+    ctx.quadraticCurveTo(controlPoint.x, controlPoint.y, endPoint.x, endPoint.y);
+    ctx.stroke();
+    ctx.closePath();
+  }
 }
 
 function setCanvasBg(color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
 }
 
-function selectColor(){
+function selectColor() {
   ctx.beginPath()
   for (let i = 0; i < ColorBtn.length; i++) {
-    console.log(ColorBtn.length)
     ColorBtn[i].onclick = function () {
       for (let i = 0; i < ColorBtn.length; i++) {
         ColorBtn[i].classList.remove('active');
@@ -128,3 +167,11 @@ function selectColor(){
     }
   }
 }
+
+eraser.onclick = () => {
+  isErasing = true;
+};
+
+highlighter.onclick = () => {
+  isErasing = false;
+};
