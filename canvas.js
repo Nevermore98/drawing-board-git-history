@@ -1,6 +1,8 @@
 let canvas = document.getElementById('drawing-board')
 let ctx = canvas.getContext('2d')
 let colorBtn = document.getElementsByClassName('color-item');
+let colorGroup = document.getElementsByClassName('color-group')
+
 
 const highlighter = document.getElementById('highlighter');
 const eraser = document.getElementById('eraser');
@@ -41,7 +43,7 @@ if (isTouchDevice) {
     ctx.beginPath()
     beginPoint = {x: e.touches[0].clientX, y: e.touches[0].clientY}
     points.push({x: e.touches[0].clientX, y: e.touches[0].clientY});
-    drawCircle(e.clientX, e.clientY, 2) //TODO 指定大小
+    drawCircle(e.clientX, e.clientY, lineWidth / 2)
   }
   canvas.ontouchmove = (e) => {
     if (!isDrawing) return
@@ -62,11 +64,14 @@ if (isTouchDevice) {
 } else {
   // 非触屏设备
   canvas.onmousedown = (e) => {
+    //储存绘图表面
+    this.firstDot = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    saveData(this.firstDot);
     isDrawing = true
     ctx.beginPath()
     beginPoint = {x: e.clientX, y: e.clientY}
     points.push({x: e.clientX, y: e.clientY});
-    drawCircle(e.clientX, e.clientY, 2) //TODO 指定大小
+    drawCircle(e.clientX, e.clientY, lineWidth / 2)
   }
 
   canvas.onmousemove = (e) => {
@@ -98,7 +103,6 @@ if (isTouchDevice) {
       drawSmoothLine(beginPoint, controlPoint, endPoint)
     }
     beginPoint = null;
-    drawCircle(e.clientX, e.clientY, 2) //TODO 指定大小
     isDrawing = false;
     points = [];
   }
@@ -110,19 +114,20 @@ if (isTouchDevice) {
 
 // 画圆形
 function drawCircle(x, y, radius) {
+  if (isErasing) {
+    ctx.beginPath()
+    ctx.clip()
+    ctx.fillStyle = 'white'
+    ctx.strokeStyle = 'white'
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.restore()
+  }
   ctx.save()
   ctx.beginPath()
   ctx.fillStyle = lineColor
   ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.fill()
-  if (isErasing) {
-    // ctx.fillStyle = 'white'
-    // ctx.strokeStyle = 'white'
-    ctx.clip()
-    // 存在橡皮擦按下 画黑色圆环的bug
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
-  }
+  ctx.closePath()
 }
 
 // 绘制二次贝塞尔平滑曲线
@@ -168,19 +173,38 @@ function selectColor() {
       }
     }
   }
-  return lineColor
 }
 
 eraser.onclick = () => {
   isErasing = true;
-  // ctx.strokeStyle = 'white'
+  console.log(colorGroup)
+  colorGroup[0].classList.add('hide')
 };
 
 highlighter.onclick = () => {
   isErasing = false;
+  colorGroup[0].classList.remove('hide')
 };
 
-function createHDCanvas (w=canvas.width,h=canvas.height) {
+line.onclick = () => {
+  isErasing = false;
+  colorGroup[0].classList.remove('hide')
+}
+
+rect.onclick = () => {
+  isErasing = false;
+  colorGroup[0].classList.remove('hide')
+
+}
+
+circle.onclick = () => {
+  isErasing = false;
+  colorGroup[0].classList.remove('hide')
+}
+
+
+
+function createHDCanvas(w = canvas.width, h = canvas.height) {
   let ratio = window.devicePixelRatio || 1;
   canvas.width = w * ratio; // 实际渲染像素
   canvas.height = h * ratio; // 实际渲染像素
@@ -189,5 +213,3 @@ function createHDCanvas (w=canvas.width,h=canvas.height) {
   ctx.scale(ratio, ratio)
   return canvas;
 }
-
-// export {lineWidth }
