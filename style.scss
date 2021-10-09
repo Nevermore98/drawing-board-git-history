@@ -3,7 +3,16 @@
   padding: 0;
   box-sizing: border-box;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
+/*下面是解决ios上去除微信点击蓝色边框 */
+a:focus,
+input:focus,
+p:focus,
+div:focus {
+  -webkit-user-modify: read-write-plaintext-only;
+}
+
 .icon {
   vertical-align: -0.15em;
   fill: currentColor;
@@ -20,7 +29,6 @@ body {
 #drawing-board {
   display: block;
   cursor: crosshair;
-  // background: url(./canvas_bg.jpg) repeat;
 }
 
 .hide {
@@ -72,24 +80,36 @@ body {
   left: 30px;
   top: 50%;
   transform: translate(0, -150px);
+
   > ul {
     list-style: none;
+
     > li {
       width: 25px;
       height: 25px;
       margin: 10px 0;
       border-radius: 50%;
       box-sizing: border-box;
-
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       transition: 0.3s;
 
       &.active {
-        box-shadow: 0 0 0 5px #d7d7d7;
-        transform: scale(1.2);
-        transition: all 0.3s;
-        // animation: 0.3s linear 0s scaleDraw none;
+        box-shadow: 0 0 0 5px #ebebeb;
+        animation: selectAni ease-in 0.3s;
+      }
+      @keyframes selectAni {
+        0% {
+          transform: scale(1.2);
+        }
+        33% {
+          transform: scale(1.4);
+        }
+        66% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
     }
   }
@@ -129,30 +149,64 @@ body {
       border-radius: 15px;
       z-index: 0;
     }
+
     &[type="range"]::-webkit-slider-thumb,
     &[type="range"]::-moz-range-thumb {
       -webkit-appearance: none;
     }
+
     &[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       height: 20px;
       width: 20px;
       margin-top: -1px;
-      background: #ffffff;
+      background: white;
       border-radius: 50%;
-      box-shadow: 0 0 8px #d7d7d7;
+      box-shadow: 0 0 8px #ebebeb;
+      cursor: pointer;
       position: relative;
-      z-index: 999;
+      z-index: 10;
     }
   }
 }
-//
-//#range-wrap
-//
-//#range-wrap input
-//
-//#range-wrap
-//
-//#range-wrap input[type=range]
-//
-//#range-wrap input
+
+@media screen and (max-width: 768px) {
+  .tools {
+    top: 0;
+    bottom: auto;
+    padding: 5px;
+
+    > button {
+      width: 40px;
+      height: 40px;
+
+      > svg {
+        width: 30px;
+        height: 30px;
+      }
+    }
+  }
+
+  .color-group {
+    left: 0;
+    top: auto;
+    bottom: 10px;
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    transform: translate(0, 0);
+
+    > ul {
+      > li {
+        display: inline-block;
+        margin: 0 5px;
+      }
+    }
+  }
+
+  #range-wrap {
+    left: auto;
+    right: 5px;
+  }
+}
